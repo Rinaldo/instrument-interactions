@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "declaration": true,
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "outDir": "./lib",
+        "strict": true,
+        "exactOptionalPropertyTypes": true,
+        "target": "ES2018"
+    },
+    "include": [
+        "src/**/*"
+    ]
+}
