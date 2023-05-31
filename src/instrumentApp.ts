@@ -1,14 +1,11 @@
-import { instrumentInputs } from "./instrumentInputs";
-import {
-    instrumentPointer,
-    InstrumentPointerParams,
-} from "./instrumentPointer";
+import { instrumentChanges } from "./instrumentChanges";
+import { instrumentClicks, instrumentClicksParams } from "./instrumentClicks";
 
-export type InstrumentParams = InstrumentPointerParams;
+export type InstrumentAppParams = instrumentClicksParams;
 
-export const instrumentApp = (params: InstrumentParams) => {
-    const removePointerListener = instrumentPointer(params);
-    const removeChangeListener = instrumentInputs(params);
+export const instrumentApp = (params: InstrumentAppParams) => {
+    const removePointerListener = instrumentClicks(params);
+    const removeChangeListener = instrumentChanges(params);
     return () => {
         removePointerListener();
         removeChangeListener();

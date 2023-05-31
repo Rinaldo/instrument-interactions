@@ -1,17 +1,17 @@
-import { isMetricElement as defaultisMetric } from "./isMetricElement";
+import { isClickableElement as defaultIsClickable } from "./isClickableElement";
 import { getAncestors } from "./getAncestors";
-import { InstrumentInputsParams } from "./instrumentInputs";
+import { instrumentChangesParams } from "./instrumentChanges";
 
-export interface InstrumentPointerParams extends InstrumentInputsParams {
-    isMetricElement?: (element: Element) => unknown;
+export interface instrumentClicksParams extends instrumentChangesParams {
+    isClickableElement?: (element: Element) => unknown;
     maxDepth?: number;
 }
 
-export const instrumentPointer = (
-    params: InstrumentPointerParams
+export const instrumentClicks = (
+    params: instrumentClicksParams
 ): (() => void) => {
     const {
-        isMetricElement = defaultisMetric,
+        isClickableElement = defaultIsClickable,
         maxDepth = 6,
         onInteraction,
         useEventCapture = true,
@@ -22,10 +22,10 @@ export const instrumentPointer = (
         const captureInteraction = (element: Element) => {
             let i = 0;
             for (element of getAncestors(element, rootElement)) {
-                if (maxDepth > -1 && maxDepth >= i++) {
+                if (maxDepth > -1 && maxDepth <= i++) {
                     return;
                 }
-                if (isMetricElement(element)) {
+                if (isClickableElement(element)) {
                     onInteraction(element);
                     return;
                 }

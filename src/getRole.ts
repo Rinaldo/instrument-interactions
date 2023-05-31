@@ -1,35 +1,51 @@
-const inputRoleMap = new Map([
-    ["checkbox", "checkbox"],
-    ["email", "textbox"],
-    ["number", "spinbutton"],
-    ["radio", "radio"],
-    ["range", "slider"],
-    ["search", "searchbox"],
-    ["tel", "textbox"],
-    ["text", "textbox"],
-    ["url", "textbox"],
-]);
 /** returns a subset of roles for clickable elements */
 export const getRole = (element: Element): string | undefined => {
     const explicitRole = element.getAttribute("role");
     if (explicitRole) {
         return explicitRole;
-    } else if (element.nodeName === "A" || element.nodeName === "AREA") {
-        return (element as HTMLAnchorElement).href ? "link" : undefined;
-    } else if (element.nodeName === "BUTTON") {
-        return "button";
-    } else if (element.nodeName === "INPUT") {
-        return element.hasAttribute("list")
-            ? "combobox"
-            : inputRoleMap.get((element as HTMLInputElement).type);
-    } else if (element.nodeName === "OPTION") {
-        return "option";
-    } else if (element.nodeName === "SELECT") {
-        return element.hasAttribute("multiple") ||
-            (element.getAttribute("size") as any) > 1
-            ? "listbox"
-            : "combobox";
-    } else if (element.nodeName === "TEXTAREA") {
-        return "textbox";
+    }
+    const localName = element.localName;
+    switch (localName) {
+        case "button":
+        case "option":
+            return localName;
+        case "a":
+        case "area":
+            return (element as HTMLAnchorElement).href ? "link" : undefined;
+        case "input":
+            switch ((element as HTMLInputElement).type) {
+                case "button":
+                case "image":
+                case "reset":
+                case "submit":
+                    return "button";
+                case "checkbox":
+                case "radio":
+                    return (element as HTMLInputElement).type;
+                case "range":
+                    return "slider";
+                case "email":
+                case "tel":
+                case "text":
+                case "url":
+                    return element.hasAttribute("list")
+                        ? "combobox"
+                        : "textbox";
+                case "search":
+                    return element.hasAttribute("list")
+                        ? "combobox"
+                        : "searchbox";
+                case "number":
+                    return "spinbutton";
+                default:
+                    return undefined;
+            }
+        case "select":
+            return element.hasAttribute("multiple") ||
+                (element as HTMLSelectElement).size > 1
+                ? "listbox"
+                : "combobox";
+        case "textarea":
+            return "textbox";
     }
 };

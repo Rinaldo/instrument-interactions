@@ -1,4 +1,4 @@
-export const getAriaLabel = (element: Element): string | null => {
+export const getAriaLabel = (element: Element): string | undefined => {
     let label = "";
     const labelledby = element.getAttribute("aria-labelledby");
     if (labelledby) {
@@ -23,7 +23,7 @@ export const getAriaLabel = (element: Element): string | null => {
             return fullLabel;
         }, "");
     }
-    return label || element.getAttribute("aria-label");
+    return label || element.getAttribute("aria-label") || undefined;
 };
 
 export const getLabel = (element: Element): string => {
@@ -40,12 +40,13 @@ export const getLabel = (element: Element): string => {
             (element as HTMLElement).innerText ||
             (element as HTMLElement).title ||
             "";
+        label = label.trim();
     }
     if (!label && element.childElementCount) {
         // support links containing accessible images and svgs
         element.querySelectorAll("title,img[alt]").forEach((element) => {
             label +=
-                ((element.nodeName === "title"
+                ((element.localName === "title"
                     ? element.textContent?.trim()
                     : (element as HTMLImageElement).alt) || "") + " ";
         });

@@ -2,11 +2,6 @@ import { getAriaLabel } from "./getLabel";
 import { getAncestors } from "./getAncestors";
 import { Metric } from "./createMetric";
 
-export interface Landmark {
-    role: string;
-    label?: string;
-}
-
 const implicitLandmarkRoleMap = new Map([
     ["MAIN", "main"], // landmark always
     ["NAV", "navigation"], // landmark always
@@ -32,7 +27,7 @@ const containerRoles = new Set([
     "dialog",
 ]);
 /** remove banner and contentinfo roles under article, complementary, main, navigation, or region */
-const removeInvalidLandmarks = (landmarks: Landmark[]): void => {
+const removeInvalidLandmarks = (landmarks: Metric[]): void => {
     if (landmarks.length > 1) {
         let bannerContentinfoIndex = -1;
         for (
@@ -42,14 +37,14 @@ const removeInvalidLandmarks = (landmarks: Landmark[]): void => {
         ) {
             if (
                 bannerContentinfoIndex === -1 &&
-                bannerContentinfoRoles.has(landmark.role)
+                bannerContentinfoRoles.has(landmark.role as string)
             ) {
                 bannerContentinfoIndex = i;
                 continue;
             }
             if (
                 bannerContentinfoIndex !== -1 &&
-                containerRoles.has(landmark.role)
+                containerRoles.has(landmark.role as string)
             ) {
                 landmarks.splice(bannerContentinfoIndex, 1);
                 removeInvalidLandmarks(landmarks);
@@ -60,16 +55,14 @@ const removeInvalidLandmarks = (landmarks: Landmark[]): void => {
 };
 
 /** also counts dialogs and named articles as landmarks */
-const getLandmark = (element: Element): Landmark | undefined => {
+const getLandmark = (element: Element): Metric | undefined => {
     const role =
         element.getAttribute("role") ||
         implicitLandmarkRoleMap.get(element.nodeName);
     if (role && roleSet.has(role)) {
         const label = getAriaLabel(element);
-        if (label) {
+        if (label || !rolesThatNeedNames.has(role)) {
             return { role, label };
-        } else if (!rolesThatNeedNames.has(role)) {
-            return { role };
         }
     }
 };
@@ -77,8 +70,8 @@ const getLandmark = (element: Element): Landmark | undefined => {
 /** mutates the landmarks array, adding a landmark if appropriate and removing landmarks if they are now improperly nested */
 export const addLandmark = (
     element: Element,
-    landmarks: Landmark[]
-): Landmark[] => {
+    landmarks: Metric[]
+): Metric[] => {
     const landmark = getLandmark(element);
     if (landmark) {
         landmarks.push(landmark);
@@ -87,14 +80,14 @@ export const addLandmark = (
     return landmarks;
 };
 
-export const withLandmarks = <T extends Metric & { landmarks?: Landmark[] }>(
+export const withLandmarks = <T extends Metric>(
     element: Element,
     metric: T
-): T & { landmarks: Landmark[] } => {
-    const landmarks: Landmark[] = [];
+): T & { landmarks: Metric[] } => {
+    const landmarks: Metric[] = [];
     for (element of getAncestors(element)) {
         addLandmark(element, landmarks);
     }
-    metric.landmarks = landmarks;
-    return metric as T & { landmarks: Landmark[] };
+    (metric as T & { landmarks: Metric[] }).landmarks = landmarks;
+    return metric as T & { landmarks: Metric[] };
 };

@@ -20,5 +20,6 @@ module.exports = {
     coverageReporters: [
         "html",
         "text"
-    ]
+    ],
+    testEnvironment: "@happy-dom/jest-environment"
 }

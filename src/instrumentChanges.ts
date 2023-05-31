@@ -1,11 +1,11 @@
-export interface InstrumentInputsParams {
+export interface instrumentChangesParams {
     onInteraction: (element: Element) => void;
     rootElement?: HTMLElement;
     useEventCapture?: boolean;
 }
 
-export const instrumentInputs = (
-    params: InstrumentInputsParams
+export const instrumentChanges = (
+    params: instrumentChangesParams
 ): (() => void) => {
     const { onInteraction, useEventCapture = true } = params;
 
