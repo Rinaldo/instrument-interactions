@@ -1,6 +1,6 @@
-import { getByLabelText, within } from "@testing-library/dom";
+import { getByLabelText, getByRole, within } from "@testing-library/dom";
 import userEvent from "@testing-library/user-event";
-import { createMetric, instrumentClicks, withLandmarks } from "../src";
+import { instrumentClicks, withLandmarks } from "../src";
 import { bodyContent } from "./test-page";
 
 describe("instrumentClicks", () => {
@@ -10,8 +10,8 @@ describe("instrumentClicks", () => {
     document.body.innerHTML = bodyContent;
 
     const unsubscribe = instrumentClicks({
-        onInteraction: (element) => {
-            onMetric(withLandmarks(element, createMetric(element)));
+        onInteraction: (metric, element) => {
+            onMetric(withLandmarks(metric, element));
         },
     });
     afterEach(() => {
@@ -45,6 +45,15 @@ describe("instrumentClicks", () => {
                 role: "button",
                 landmarks,
             });
+        });
+
+        it("ignores disabled buttons", async () => {
+            await user.click(
+                buttonsSection.getByRole("button", {
+                    name: "Disabled Button",
+                })
+            );
+            expect(onMetric).not.toHaveBeenCalled();
         });
 
         it("handles fancy buttons", async () => {
@@ -88,6 +97,32 @@ describe("instrumentClicks", () => {
             });
         });
 
+        it("handles input buttons", async () => {
+            await user.click(
+                buttonsSection.getByRole("button", {
+                    name: "Input Button",
+                })
+            );
+            expect(onMetric).toHaveBeenCalledWith({
+                label: "Input Button",
+                role: "button",
+                landmarks,
+            });
+        });
+
+        it("handles submit buttons", async () => {
+            await user.click(
+                buttonsSection.getByRole("button", {
+                    name: "Submit Button",
+                })
+            );
+            expect(onMetric).toHaveBeenCalledWith({
+                label: "Submit Button",
+                role: "button",
+                landmarks,
+            });
+        });
+
         it("handles keyboard interactions", async () => {
             await user.click(
                 buttonsSection.getByRole("button", {
@@ -110,6 +145,45 @@ describe("instrumentClicks", () => {
                 role: "button",
                 landmarks,
             });
+        });
+
+        it("handles deeply nested elements (up to 6 by default)", async () => {
+            await user.click(
+                within(
+                    buttonsSection.getByRole("button", {
+                        name: "0 1 2 3 4 5 6 7",
+                    })
+                ).getByText("4")
+            );
+            expect(onMetric).toHaveBeenCalledWith({
+                label: "01234567", // some weirdness I think with happy-dom element.innerText value
+                role: "button",
+                landmarks,
+            });
+            onMetric.mockClear();
+
+            await user.click(
+                within(
+                    buttonsSection.getByRole("button", {
+                        name: "0 1 2 3 4 5 6 7",
+                    })
+                ).getByText("5")
+            );
+            expect(onMetric).toHaveBeenCalledWith({
+                label: "01234567", // some weirdness I think with happy-dom element.innerText value
+                role: "button",
+                landmarks,
+            });
+            onMetric.mockClear();
+
+            await user.click(
+                within(
+                    buttonsSection.getByRole("button", {
+                        name: "0 1 2 3 4 5 6 7",
+                    })
+                ).getByText("6")
+            );
+            expect(onMetric).not.toHaveBeenCalled();
         });
     });
 
@@ -165,44 +239,33 @@ describe("instrumentClicks", () => {
             getByLabelText(document.body, "Fake Inputs")
         );
 
-        const landmarks = [
-            {
-                role: "region",
-                label: "Fake Inputs",
-            },
-            {
-                role: "region",
-                label: "Inputs",
-            },
-            {
-                role: "main",
-            },
-        ];
-
-        it("handles fake checkboxes", async () => {
+        it("ignores fake checkboxes with default isClickable", async () => {
             await user.click(
                 fakeInputsSection.getByRole("checkbox", {
                     name: "Remember my preferences",
                 })
             );
-            expect(onMetric).toHaveBeenLastCalledWith({
-                label: "Remember my preferences",
-                role: "checkbox",
-                landmarks,
-            });
+            expect(onMetric).not.toHaveBeenCalled();
         });
 
-        it("handles fake radios", async () => {
+        it("ignores fake radios with default isClickable", async () => {
             await user.click(
                 fakeInputsSection.getByRole("radio", {
                     name: "Regular crust",
                 })
             );
-            expect(onMetric).toHaveBeenLastCalledWith({
-                label: "Regular crust",
-                role: "radio",
-                landmarks,
-            });
+            expect(onMetric).not.toHaveBeenCalled();
         });
+    });
+
+    it("returns an unsubscribe function", async () => {
+        unsubscribe();
+
+        await user.click(
+            getByRole(document.body, "button", {
+                name: "Real Button",
+            })
+        );
+        expect(onMetric).not.toHaveBeenCalled();
     });
 });

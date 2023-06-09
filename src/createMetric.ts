@@ -1,12 +1,12 @@
 import { getRole } from "./getRole";
-import { getLabel } from "./getLabel";
+import { getAccessibleName } from "./getAccessibleName";
 
 export interface Metric {
-    label: string | undefined;
-    role: string | undefined;
+    label: string;
+    role?: string | undefined;
 }
 
 export const createMetric = (element: Element): Metric => ({
-    label: getLabel(element),
+    label: getAccessibleName(element),
     role: getRole(element),
 });

@@ -1,6 +1,6 @@
 import { getByLabelText, within } from "@testing-library/dom";
 import userEvent from "@testing-library/user-event";
-import { createMetric, instrumentApp, withLandmarks } from "../src";
+import { instrumentApp, withLandmarks } from "../src";
 import { bodyContent } from "./test-page";
 
 describe("instrumentApp", () => {
@@ -10,8 +10,8 @@ describe("instrumentApp", () => {
     document.body.innerHTML = bodyContent;
 
     const unsubscribe = instrumentApp({
-        onInteraction: (element) => {
-            onMetric(withLandmarks(element, createMetric(element)));
+        onInteraction: (metric, element) => {
+            onMetric(withLandmarks(metric, element));
         },
     });
     afterEach(() => {
@@ -34,15 +34,63 @@ describe("instrumentApp", () => {
             },
         ];
 
-        it("handles simple buttons", async () => {
+        it("handles fancy buttons", async () => {
             await user.click(
-                buttonsSection.getByRole("button", {
-                    name: "Real Button",
-                })
+                within(
+                    buttonsSection.getByRole("button", {
+                        name: "Fancy Button",
+                    })
+                ).getByText("Fancy")
             );
             expect(onMetric).toHaveBeenCalledWith({
-                label: "Real Button",
+                label: "Fancy Button",
                 role: "button",
+                landmarks,
+            });
+        });
+    });
+
+    describe("fake inputs", () => {
+        const fakeInputsSection = within(
+            getByLabelText(document.body, "Fake Inputs")
+        );
+
+        const landmarks = [
+            {
+                role: "region",
+                label: "Fake Inputs",
+            },
+            {
+                role: "region",
+                label: "Inputs",
+            },
+            {
+                role: "main",
+            },
+        ];
+
+        it("handles fake checkboxes with default isClickable", async () => {
+            await user.click(
+                fakeInputsSection.getByRole("checkbox", {
+                    name: "Remember my preferences",
+                })
+            );
+            expect(onMetric).toHaveBeenLastCalledWith({
+                label: "Remember my preferences",
+                role: "checkbox",
+                landmarks,
+            });
+        });
+
+        it("handles fake radios with default isClickable", async () => {
+            await user.click(
+                fakeInputsSection.getByRole("radio", {
+                    name: "Regular crust",
+                })
+            );
+            expect(onMetric).toHaveBeenLastCalledWith({
+                label: "Regular crust",
+                role: "radio",
                 landmarks,
             });
         });

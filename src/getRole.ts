@@ -1,4 +1,4 @@
-/** returns a subset of roles for clickable elements */
+/** Returns the element's role. Implicit roles are only supported for interactive elements */
 export const getRole = (element: Element): string | undefined => {
     const explicitRole = element.getAttribute("role");
     if (explicitRole) {

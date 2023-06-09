@@ -1,45 +1,63 @@
-import { isClickableElement as defaultIsClickable } from "./isClickableElement";
+import { createMetric, Metric } from "./createMetric";
 import { getAncestors } from "./getAncestors";
-import { instrumentChangesParams } from "./instrumentChanges";
+import { getRole } from "./getRole";
+import { clickableRoles, isNotDisabled } from "./isInteractive";
 
-export interface instrumentClicksParams extends instrumentChangesParams {
-    isClickableElement?: (element: Element) => unknown;
+export interface InstrumentClicksParams {
+    /** called whenever a click event is triggered on an interactive element */
+    onInteraction: (metric: Metric, element: Element) => void;
+    /** find the interactive element, if any, that was clicked on */
+    findInteractive?: (element: Element) => Element | undefined;
+    /** how far up the tree the default findInteractive function walks up the tree */
     maxDepth?: number;
+    /** element to attach the listener to */
+    rootElement?: HTMLElement;
+    /** add a listener with { capture: true }, enabled by default */
+    useEventCapture?: boolean;
 }
 
+/** Records click events on interactive elements, returns an unsubscribe function */
 export const instrumentClicks = (
-    params: instrumentClicksParams
+    params: InstrumentClicksParams
 ): (() => void) => {
     const {
-        isClickableElement = defaultIsClickable,
-        maxDepth = 6,
         onInteraction,
+        maxDepth = 6,
+        rootElement = document.body,
         useEventCapture = true,
     } = params;
-    let pending: Element | null = null; // dedupe click and keyboard events for same element, see below
-    const rootElement = params.rootElement || document.body;
     if (rootElement) {
+        const findInteractive: (element: Element) => Element | undefined =
+            params.findInteractive ||
+            ((element) => {
+                for (element of getAncestors(element, rootElement, maxDepth)) {
+                    if (isNotDisabled(element)) {
+                        if (clickableRoles.has(getRole(element)!)) {
+                            return element;
+                        }
+                    } else return;
+                }
+            });
         const captureInteraction = (element: Element) => {
-            let i = 0;
-            for (element of getAncestors(element, rootElement)) {
-                if (maxDepth > -1 && maxDepth <= i++) {
-                    return;
-                }
-                if (isClickableElement(element)) {
-                    onInteraction(element);
-                    return;
-                }
-            }
+            const interactiveElement = findInteractive(element);
+            interactiveElement &&
+                onInteraction(
+                    createMetric(interactiveElement),
+                    interactiveElement
+                );
         };
-        const clickListener = (e: MouseEvent) => {
-            if (e.target !== pending) {
-                captureInteraction(e.target as Element);
-            }
-        };
-        // support Enter and Space keyboard interaction
+        const clickListener = (e: MouseEvent) =>
+            captureInteraction(e.target as Element);
+        // support Enter and Space keyboard interaction for non-native controls
         const keyboardListener = (e: KeyboardEvent) => {
             const activeElement = document.activeElement;
-            if (activeElement && (e.code === "Enter" || e.code === "Space")) {
+            if (
+                activeElement &&
+                activeElement.localName !== "input" &&
+                activeElement.localName !== "button" &&
+                activeElement.localName !== "a" &&
+                (e.code === "Enter" || e.code === "Space")
+            ) {
                 const activeDescendantId = activeElement.getAttribute(
                     "aria-activedescendant"
                 );
@@ -49,11 +67,6 @@ export const instrumentClicks = (
                     null;
                 const element = activeDescendant || activeElement;
                 captureInteraction(element);
-                // avoid capturing duplicate click and keydown metrics on key press
-                pending = element;
-                requestAnimationFrame(() => {
-                    pending = null;
-                });
             }
         };
         rootElement.addEventListener("click", clickListener, useEventCapture);

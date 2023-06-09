@@ -1,6 +1,6 @@
 import { getByLabelText, within } from "@testing-library/dom";
 import userEvent from "@testing-library/user-event";
-import { createMetric, instrumentChanges, withLandmarks } from "../src";
+import { instrumentChanges, withLandmarks } from "../src";
 import { bodyContent } from "./test-page";
 
 describe("instrumentChanges", () => {
@@ -10,8 +10,8 @@ describe("instrumentChanges", () => {
     document.body.innerHTML = bodyContent;
 
     const unsubscribe = instrumentChanges({
-        onInteraction: (element) => {
-            onMetric(withLandmarks(element, createMetric(element)));
+        onInteraction: (metric, element) => {
+            onMetric(withLandmarks(metric, element));
         },
     });
     afterEach(() => {
@@ -101,5 +101,16 @@ describe("instrumentChanges", () => {
             role: "combobox",
             landmarks,
         });
+    });
+
+    it("returns an unsubscribe function", async () => {
+        unsubscribe();
+        await user.click(
+            inputsSection.getByRole("radio", {
+                name: "Huey",
+            })
+        );
+        await user.tab();
+        expect(onMetric).not.toHaveBeenCalled();
     });
 });

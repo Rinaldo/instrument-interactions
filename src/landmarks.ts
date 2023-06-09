@@ -1,6 +1,11 @@
-import { getAriaLabel } from "./getLabel";
+import type { Metric } from "./createMetric";
+import { getAriaLabel } from "./getAccessibleName";
 import { getAncestors } from "./getAncestors";
-import { Metric } from "./createMetric";
+
+export interface Landmark {
+    role: string;
+    label?: string | undefined;
+}
 
 const implicitLandmarkRoleMap = new Map([
     ["MAIN", "main"], // landmark always
@@ -27,7 +32,7 @@ const containerRoles = new Set([
     "dialog",
 ]);
 /** remove banner and contentinfo roles under article, complementary, main, navigation, or region */
-const removeInvalidLandmarks = (landmarks: Metric[]): void => {
+const removeInvalidLandmarks = (landmarks: Landmark[]): void => {
     if (landmarks.length > 1) {
         let bannerContentinfoIndex = -1;
         for (
@@ -55,23 +60,23 @@ const removeInvalidLandmarks = (landmarks: Metric[]): void => {
 };
 
 /** also counts dialogs and named articles as landmarks */
-const getLandmark = (element: Element): Metric | undefined => {
+const getLandmark = (element: Element): Landmark | undefined => {
     const role =
         element.getAttribute("role") ||
         implicitLandmarkRoleMap.get(element.nodeName);
     if (role && roleSet.has(role)) {
-        const label = getAriaLabel(element);
+        const label = getAriaLabel(element) || undefined;
         if (label || !rolesThatNeedNames.has(role)) {
             return { role, label };
         }
     }
 };
 
-/** mutates the landmarks array, adding a landmark if appropriate and removing landmarks if they are now improperly nested */
-export const addLandmark = (
+/** Mutates the landmarks array, adding a landmark if appropriate and removing landmarks if they are now improperly nested */
+export const pushLandmark = (
     element: Element,
-    landmarks: Metric[]
-): Metric[] => {
+    landmarks: Landmark[] = []
+): Landmark[] => {
     const landmark = getLandmark(element);
     if (landmark) {
         landmarks.push(landmark);
@@ -80,14 +85,26 @@ export const addLandmark = (
     return landmarks;
 };
 
-export const withLandmarks = <T extends Metric>(
+export const getLandmarks = (
     element: Element,
-    metric: T
-): T & { landmarks: Metric[] } => {
-    const landmarks: Metric[] = [];
-    for (element of getAncestors(element)) {
-        addLandmark(element, landmarks);
+    rootElement?: Element,
+    maxDepth?: number
+): Landmark[] => {
+    const landmarks: Landmark[] = [];
+    for (element of getAncestors(element, rootElement, maxDepth)) {
+        pushLandmark(element, landmarks);
     }
-    (metric as T & { landmarks: Metric[] }).landmarks = landmarks;
-    return metric as T & { landmarks: Metric[] };
+    return landmarks;
+};
+
+/** Walks up the tree, collects landmarks, and adds them to the metric */
+export const withLandmarks = <T extends Metric>(
+    metric: T,
+    element: Element,
+    rootElement?: Element,
+    maxDepth?: number
+): T & { landmarks: Landmark[] } => {
+    const landmarks = getLandmarks(element, rootElement, maxDepth);
+    (metric as T & { landmarks: Landmark[] }).landmarks = landmarks;
+    return metric as T & { landmarks: Landmark[] };
 };

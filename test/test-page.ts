@@ -14,6 +14,8 @@ export const bodyContent = `
 
         <button>Real Button</button>
 
+        <button disabled>Disabled Button</button>
+
         <button type="button">
             <span><em>Fancy</em> Button</span>
         </button>
@@ -43,6 +45,11 @@ export const bodyContent = `
             </div>
         </div>
 
+        <input type="button" value="Input Button" />
+
+        <input type="submit" value="Submit Button" />
+
+        <button>0<span>1<span>2<span>3<span>4<span>5<span>6<span>7</span></span></span></span></span></span></span></button>
 
     </section>
 

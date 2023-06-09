@@ -1,4 +1,4 @@
-export const getAriaLabel = (element: Element): string | undefined => {
+export const getAriaLabel = (element: Element): string => {
     let label = "";
     const labelledby = element.getAttribute("aria-labelledby");
     if (labelledby) {
@@ -23,11 +23,12 @@ export const getAriaLabel = (element: Element): string | undefined => {
             return fullLabel;
         }, "");
     }
-    return label || element.getAttribute("aria-label") || undefined;
+    return label || element.getAttribute("aria-label") || "";
 };
 
-export const getLabel = (element: Element): string => {
-    let label = getAriaLabel(element) || "";
+/** Returns the element's accessible name */
+export const getAccessibleName = (element: Element): string => {
+    let label = getAriaLabel(element);
     if (!label && "labels" in element) {
         (element as HTMLInputElement).labels?.forEach((labelElement) => {
             label += labelElement.innerText + " ";
@@ -38,6 +39,7 @@ export const getLabel = (element: Element): string => {
         label =
             (element as HTMLImageElement).alt ||
             (element as HTMLElement).innerText ||
+            (element as HTMLInputElement).value ||
             (element as HTMLElement).title ||
             "";
         label = label.trim();
