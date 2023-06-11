@@ -31,11 +31,12 @@ export const instrumentClicks = (
             params.findInteractive ||
             ((element) => {
                 for (element of getAncestors(element, rootElement, maxDepth)) {
-                    if (isNotDisabled(element)) {
-                        if (clickableRoles.has(getRole(element)!)) {
-                            return element;
-                        }
-                    } else return;
+                    if (
+                        isNotDisabled(element) &&
+                        clickableRoles.has(getRole(element)!)
+                    ) {
+                        return element;
+                    }
                 }
             });
         const captureInteraction = (element: Element) => {

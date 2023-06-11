@@ -13,28 +13,42 @@ export type InstrumentAppParams = InstrumentClicksParams;
 /** Records change events and click events on interactive elements, returns an unsubscribe function */
 export const instrumentApp = (params: InstrumentAppParams) => {
     if (!params.findInteractive) {
+        const { maxDepth = 6, rootElement = document.body } = params;
         params = {
             ...params,
-            // include clicks on non-native checkboxes, radios, and selects by default
+            // include clicks on non-native checkboxes, radios, and selects by default since they don't fire change events
             findInteractive: (element) => {
-                for (element of getAncestors(
-                    element,
-                    params.rootElement ?? document.body,
-                    params.maxDepth ?? 6
-                )) {
+                for (element of getAncestors(element, rootElement, maxDepth)) {
                     if (isNotDisabled(element)) {
                         const role = getRole(element);
                         if (
                             role &&
                             (clickableRoles.has(role) ||
                                 (checkboxAndRadioRoles.has(role) &&
-                                    element.localName !== "input") ||
-                                (role === "listbox" &&
-                                    element.localName !== "select"))
+                                    element.localName !== "input"))
                         ) {
                             return element;
                         }
-                    } else return;
+                        // return the listbox when a non-native option is clicked
+                        if (
+                            role === "option" &&
+                            element.localName !== "option"
+                        ) {
+                            for (element of getAncestors(
+                                element,
+                                rootElement,
+                                maxDepth
+                            )) {
+                                if (
+                                    isNotDisabled(element) &&
+                                    getRole(element) === "listbox" &&
+                                    element.localName !== "select"
+                                ) {
+                                    return element;
+                                }
+                            }
+                        }
+                    }
                 }
             },
         };
