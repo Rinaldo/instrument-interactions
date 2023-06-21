@@ -51,9 +51,7 @@ describe("instrumentApp", () => {
     });
 
     describe("fake inputs", () => {
-        const fakeInputsSection = within(
-            getByLabelText(document.body, "Fake Inputs")
-        );
+        const fakeInputsSection = within(getByLabelText(document.body, "Fake Inputs"));
 
         const landmarks = [
             {

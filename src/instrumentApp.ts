@@ -2,11 +2,7 @@ import { getAncestors } from "./getAncestors";
 import { getRole } from "./getRole";
 import { instrumentChanges } from "./instrumentChanges";
 import { instrumentClicks, InstrumentClicksParams } from "./instrumentClicks";
-import {
-    checkboxAndRadioRoles,
-    clickableRoles,
-    isNotDisabled,
-} from "./isInteractive";
+import { checkboxAndRadioRoles, clickableRoles, isNotDisabled } from "./isInteractive";
 
 export type InstrumentAppParams = InstrumentClicksParams;
 
@@ -24,21 +20,13 @@ export const instrumentApp = (params: InstrumentAppParams) => {
                         if (
                             role &&
                             (clickableRoles.has(role) ||
-                                (checkboxAndRadioRoles.has(role) &&
-                                    element.localName !== "input"))
+                                (checkboxAndRadioRoles.has(role) && element.localName !== "input"))
                         ) {
                             return element;
                         }
                         // return the listbox when a non-native option is clicked
-                        if (
-                            role === "option" &&
-                            element.localName !== "option"
-                        ) {
-                            for (element of getAncestors(
-                                element,
-                                rootElement,
-                                maxDepth
-                            )) {
+                        if (role === "option" && element.localName !== "option") {
+                            for (element of getAncestors(element, rootElement, maxDepth)) {
                                 if (
                                     isNotDisabled(element) &&
                                     getRole(element) === "listbox" &&

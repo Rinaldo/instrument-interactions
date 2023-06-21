@@ -1,10 +1,4 @@
-export const clickableRoles = new Set([
-    "button",
-    "link",
-    "menuitem",
-    "switch",
-    "tab",
-]);
+export const clickableRoles = new Set(["button", "link", "menuitem", "switch", "tab"]);
 
 export const checkboxAndRadioRoles = new Set([
     "checkbox",
@@ -13,5 +7,4 @@ export const checkboxAndRadioRoles = new Set([
     "menuitemradio",
 ]);
 
-export const isNotDisabled = (element: Element) =>
-    element.getAttribute("aria-disabled") !== "true"; // don't need to check actual disabled property since events aren't fired on disabled elements
+export const isNotDisabled = (element: Element) => element.getAttribute("aria-disabled") !== "true"; // don't need to check actual disabled property since events aren't fired on disabled elements

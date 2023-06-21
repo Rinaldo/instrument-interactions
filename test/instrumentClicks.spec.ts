@@ -235,9 +235,7 @@ describe("instrumentClicks", () => {
     });
 
     describe("fake inputs", () => {
-        const fakeInputsSection = within(
-            getByLabelText(document.body, "Fake Inputs")
-        );
+        const fakeInputsSection = within(getByLabelText(document.body, "Fake Inputs"));
 
         it("ignores fake checkboxes with default isClickable", async () => {
             await user.click(

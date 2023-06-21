@@ -12,29 +12,27 @@ export interface InstrumentClicksParams {
     maxDepth?: number;
     /** element to attach the listener to */
     rootElement?: HTMLElement;
-    /** add a listener with { capture: true }, enabled by default */
-    useEventCapture?: boolean;
+    /** whether to add listener(s) with { capture: true }, enabled by default */
+    eventCapture?: boolean;
+    /** whether to add Space and Enter keyboard listeners to support keyboard 'clicks' on non-native buttons and links, enabled by default */
+    keyboardHandlers?: boolean;
 }
 
 /** Records click events on interactive elements, returns an unsubscribe function */
-export const instrumentClicks = (
-    params: InstrumentClicksParams
-): (() => void) => {
+export const instrumentClicks = (params: InstrumentClicksParams): (() => void) => {
     const {
         onInteraction,
         maxDepth = 6,
         rootElement = document.body,
-        useEventCapture = true,
+        eventCapture = true,
+        keyboardHandlers = true,
     } = params;
     if (rootElement) {
         const findInteractive: (element: Element) => Element | undefined =
             params.findInteractive ||
             ((element) => {
                 for (element of getAncestors(element, rootElement, maxDepth)) {
-                    if (
-                        isNotDisabled(element) &&
-                        clickableRoles.has(getRole(element)!)
-                    ) {
+                    if (isNotDisabled(element) && clickableRoles.has(getRole(element)!)) {
                         return element;
                     }
                 }
@@ -42,13 +40,9 @@ export const instrumentClicks = (
         const captureInteraction = (element: Element) => {
             const interactiveElement = findInteractive(element);
             interactiveElement &&
-                onInteraction(
-                    createMetric(interactiveElement),
-                    interactiveElement
-                );
+                onInteraction(createMetric(interactiveElement), interactiveElement);
         };
-        const clickListener = (e: MouseEvent) =>
-            captureInteraction(e.target as Element);
+        const clickListener = (e: MouseEvent) => captureInteraction(e.target as Element);
         // support Enter and Space keyboard interaction for non-native controls
         const keyboardListener = (e: KeyboardEvent) => {
             const activeElement = document.activeElement;
@@ -59,34 +53,19 @@ export const instrumentClicks = (
                 activeElement.localName !== "a" &&
                 (e.code === "Enter" || e.code === "Space")
             ) {
-                const activeDescendantId = activeElement.getAttribute(
-                    "aria-activedescendant"
-                );
+                const activeDescendantId = activeElement.getAttribute("aria-activedescendant");
                 const activeDescendant =
-                    (activeDescendantId &&
-                        document.getElementById(activeDescendantId)) ||
-                    null;
+                    (activeDescendantId && document.getElementById(activeDescendantId)) || null;
                 const element = activeDescendant || activeElement;
                 captureInteraction(element);
             }
         };
-        rootElement.addEventListener("click", clickListener, useEventCapture);
-        rootElement.addEventListener(
-            "keydown",
-            keyboardListener,
-            useEventCapture
-        );
+        rootElement.addEventListener("click", clickListener, eventCapture);
+        keyboardHandlers && rootElement.addEventListener("keydown", keyboardListener, eventCapture);
         return () => {
-            rootElement.removeEventListener(
-                "click",
-                clickListener,
-                useEventCapture
-            );
-            rootElement.removeEventListener(
-                "keydown",
-                keyboardListener,
-                useEventCapture
-            );
+            rootElement.removeEventListener("click", clickListener, eventCapture);
+            keyboardHandlers &&
+                rootElement.removeEventListener("keydown", keyboardListener, eventCapture);
         };
     }
     throw Error("Invalid root element");

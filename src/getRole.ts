@@ -28,21 +28,16 @@ export const getRole = (element: Element): string | undefined => {
                 case "tel":
                 case "text":
                 case "url":
-                    return element.hasAttribute("list")
-                        ? "combobox"
-                        : "textbox";
+                    return element.hasAttribute("list") ? "combobox" : "textbox";
                 case "search":
-                    return element.hasAttribute("list")
-                        ? "combobox"
-                        : "searchbox";
+                    return element.hasAttribute("list") ? "combobox" : "searchbox";
                 case "number":
                     return "spinbutton";
                 default:
                     return undefined;
             }
         case "select":
-            return element.hasAttribute("multiple") ||
-                (element as HTMLSelectElement).size > 1
+            return element.hasAttribute("multiple") || (element as HTMLSelectElement).size > 1
                 ? "listbox"
                 : "combobox";
         case "textarea":
