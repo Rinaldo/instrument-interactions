@@ -1,21 +1,25 @@
-import { createMetric, Metric } from "./createMetric";
 import { getAncestors } from "./getAncestors";
 import { getRole } from "./getRole";
 import { clickableRoles, isNotDisabled } from "./isInteractive";
 
 export interface InstrumentClicksParams {
-    /** called whenever a click event is triggered on an interactive element */
-    onInteraction: (metric: Metric, element: Element) => void;
+    /** called whenever an event is triggered on an interactive element */
+    onInteraction: (element: Element) => void;
+
     /** find the interactive element, if any, that was clicked on */
     findInteractive?: (element: Element) => Element | undefined;
-    /** how far up the tree the default findInteractive function walks up the tree */
+
+    /** how far up the tree the default findInteractive function walks up the tree, default is 6 */
     maxDepth?: number;
-    /** element to attach the listener to */
-    rootElement?: HTMLElement;
-    /** whether to add listener(s) with { capture: true }, enabled by default */
-    eventCapture?: boolean;
+
     /** whether to add Space and Enter keyboard listeners to support keyboard 'clicks' on non-native buttons and links, enabled by default */
     keyboardHandlers?: boolean;
+
+    /** whether to add listener(s) with { capture: true }, enabled by default */
+    eventCapture?: boolean;
+
+    /** element to attach the listener to, default is document.body */
+    rootElement?: HTMLElement;
 }
 
 /** Records click events on interactive elements, returns an unsubscribe function */
@@ -39,8 +43,7 @@ export const instrumentClicks = (params: InstrumentClicksParams): (() => void) =
             });
         const captureInteraction = (element: Element) => {
             const interactiveElement = findInteractive(element);
-            interactiveElement &&
-                onInteraction(createMetric(interactiveElement), interactiveElement);
+            interactiveElement && onInteraction(interactiveElement);
         };
         const clickListener = (e: MouseEvent) => captureInteraction(e.target as Element);
         // support Enter and Space keyboard interaction for non-native controls

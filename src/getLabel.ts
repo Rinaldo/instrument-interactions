@@ -27,7 +27,7 @@ export const getAriaLabel = (element: Element): string => {
 };
 
 /** Returns the element's accessible name */
-export const getAccessibleName = (element: Element): string => {
+export const getLabel = (element: Element): string => {
     let label = getAriaLabel(element);
     if (!label && "labels" in element) {
         (element as HTMLInputElement).labels?.forEach((labelElement) => {
@@ -39,6 +39,7 @@ export const getAccessibleName = (element: Element): string => {
         label =
             (element as HTMLImageElement).alt ||
             (element as HTMLElement).innerText ||
+            (element as HTMLInputElement).placeholder ||
             (element as HTMLInputElement).value ||
             (element as HTMLElement).title ||
             "";

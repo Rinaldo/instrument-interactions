@@ -1,6 +1,6 @@
 import { getByLabelText, getByRole, within } from "@testing-library/dom";
 import userEvent from "@testing-library/user-event";
-import { instrumentClicks, withLandmarks } from "../src";
+import { instrumentClicks, getLabel, getLandmarks, getRole } from "../src";
 import { bodyContent } from "./test-page";
 
 describe("instrumentClicks", () => {
@@ -10,8 +10,12 @@ describe("instrumentClicks", () => {
     document.body.innerHTML = bodyContent;
 
     const unsubscribe = instrumentClicks({
-        onInteraction: (metric, element) => {
-            onMetric(withLandmarks(metric, element));
+        onInteraction: (element) => {
+            onMetric({
+                label: getLabel(element),
+                role: getRole(element),
+                landmarks: getLandmarks(element),
+            });
         },
     });
     afterEach(() => {

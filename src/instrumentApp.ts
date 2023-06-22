@@ -1,15 +1,17 @@
 import { getAncestors } from "./getAncestors";
 import { getRole } from "./getRole";
-import { instrumentChanges } from "./instrumentChanges";
 import { instrumentClicks, InstrumentClicksParams } from "./instrumentClicks";
 import { checkboxAndRadioRoles, clickableRoles, isNotDisabled } from "./isInteractive";
 
-export type InstrumentAppParams = InstrumentClicksParams;
-
 /** Records change events and click events on interactive elements, returns an unsubscribe function */
-export const instrumentApp = (params: InstrumentAppParams) => {
+export const instrumentApp = (params: InstrumentClicksParams): (() => void) => {
+    const {
+        onInteraction,
+        eventCapture = true,
+        maxDepth = 6,
+        rootElement = document.body,
+    } = params;
     if (!params.findInteractive) {
-        const { maxDepth = 6, rootElement = document.body } = params;
         params = {
             ...params,
             // include clicks on non-native checkboxes, radios, and selects by default since they don't fire change events
@@ -41,10 +43,11 @@ export const instrumentApp = (params: InstrumentAppParams) => {
             },
         };
     }
-    const removePointerListener = instrumentClicks(params);
-    const removeChangeListener = instrumentChanges(params);
+    const removeClickListener = instrumentClicks(params);
+    const changeListener = (e: Event) => onInteraction(e.target as Element);
+    rootElement.addEventListener("change", changeListener, eventCapture);
     return () => {
-        removePointerListener();
-        removeChangeListener();
+        removeClickListener();
+        rootElement.removeEventListener("change", changeListener, eventCapture);
     };
 };
